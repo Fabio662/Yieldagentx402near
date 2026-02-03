@@ -1,4 +1,4 @@
-function getHTMLPage() {
+function getHTMLPage(CONFIG) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -173,7 +173,7 @@ function getHTMLPage() {
       <div class="payment-section">
         <div class="payment-details">
           <div class="label">One-time Access Fee</div>
-          <div class="cost">$${CONFIG.PAYMENT_AMOUNT} NEAR</div>
+          <div class="cost">${CONFIG.PAYMENT_AMOUNT} NEAR</div>
           <div class="label">on NEAR Mainnet</div>
           <div class="address-section">
             <div class="label">Send NEAR to:</div>
@@ -183,4 +183,55 @@ function getHTMLPage() {
             </div>
           </div>
         </div>
-      </div
+      </div>
+
+      <button class="try-agent-btn" onclick="checkPayment()">🚀 Try Agent</button>
+
+      <div class="result-section" id="resultSection"></div>
+
+      <div class="instructions">
+        <h3>How it works</h3>
+        <ol>
+          <li>Send the exact amount of NEAR to the address above.</li>
+          <li>Click <strong>Try Agent</strong>.</li>
+          <li>Your yields will unlock instantly after confirmation.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="footer">
+      Built for the NEAR ecosystem 🌐
+    </div>
+  </div>
+
+  <script>
+    function copyAddress() {
+      const address = document.getElementById("paymentAddress").innerText;
+      navigator.clipboard.writeText(address);
+      alert("Address copied to clipboard!");
+    }
+
+    async function checkPayment() {
+      const res = await fetch("/check-payment");
+      const data = await res.json();
+      const resultSection = document.getElementById("resultSection");
+
+      if (data.success) {
+        resultSection.classList.add("show");
+        resultSection.innerHTML = data.yields.map(yieldItem => \`
+          <div class="result-item">
+            <div class="result-protocol">\${yieldItem.protocol}</div>
+            <div class="result-details">
+              <div>APY: \${yieldItem.apy}%</div>
+              <div>TVL: \${yieldItem.tvl}</div>
+            </div>
+          </div>
+        \`).join("");
+      } else {
+        alert("Payment not detected yet. Please try again shortly.");
+      }
+    }
+  </script>
+</body>
+</html>`;
+}
