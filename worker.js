@@ -1,51 +1,6 @@
-/**
- * NEAR Network x402 API - Liquid Staking Yield Opportunities
- * Single-file Cloudflare Worker
- * Accepts NEAR payments on NEAR network
- */
-
-const CONFIG = {
-  PAYMENT_ADDRESS: 'yieldagent.near',
-  PAYMENT_AMOUNT: '0.1',
-  PAYMENT_ASSET: 'NEAR',
-  NETWORK: 'near',
-  TIMEOUT_SECONDS: 3600,
-  API_DESCRIPTION: 'Access to real-time NEAR liquid staking yield opportunities',
-  API_VERSION: 1
-};
-
-const YIELD_DATA = {
-  success: true,
-  data: {
-    opportunities: [
-      { id: 1, protocol: "RHEA", apy: "9.2%", risk: "Low", tvl: "$18M", asset: "NEAR" },
-      { id: 2, protocol: "Meta Pool", apy: "8.7%", risk: "Low", tvl: "$45M", asset: "NEAR" },
-      { id: 3, protocol: "Linear Protocol", apy: "8.5%", risk: "Low", tvl: "$32M", asset: "NEAR" }
-    ],
-    network: "NEAR",
-    lastUpdated: new Date().toISOString()
-  }
-};
-
-function generateX402Response(resource) {
-  return {
-    x402Version: CONFIG.API_VERSION,
-    accepts: [{
-      scheme: "exact",
-      network: CONFIG.NETWORK,
-      maxAmountRequired: CONFIG.PAYMENT_AMOUNT,
-      resource: resource,
-      description: CONFIG.API_DESCRIPTION,
-      mimeType: "application/json",
-      payTo: CONFIG.PAYMENT_ADDRESS,
-      maxTimeoutSeconds: CONFIG.TIMEOUT_SECONDS,
-      asset: CONFIG.PAYMENT_ASSET
-    }]
-  };
-}
-
 function getHTMLPage() {
-  return `<!DOCTYPE html>
+  const html = `
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -219,12 +174,12 @@ function getHTMLPage() {
       <div class="payment-section">
         <div class="payment-details">
           <div class="label">One-time Access Fee</div>
-          <div class="cost">${CONFIG.PAYMENT_AMOUNT} NEAR</div>
+          <div class="cost">__PAYMENT_AMOUNT__ NEAR</div>
           <div class="label">on NEAR Mainnet</div>
           <div class="address-section">
             <div class="label">Send NEAR to:</div>
             <div class="address-container">
-              <div class="address" id="paymentAddress">${CONFIG.PAYMENT_ADDRESS}</div>
+              <div class="address" id="paymentAddress">__PAYMENT_ADDRESS__</div>
               <button class="copy-btn" onclick="copyAddress(event)">📋 Copy</button>
             </div>
           </div>
@@ -238,7 +193,7 @@ function getHTMLPage() {
       <div class="instructions">
         <h3>How to Use:</h3>
         <ol>
-          <li>Send <strong>${CONFIG.PAYMENT_AMOUNT} NEAR</strong> to the address above on <strong>NEAR network</strong></li>
+          <li>Send <strong>__PAYMENT_AMOUNT__ NEAR</strong> to the address above on <strong>NEAR network</strong></li>
           <li>Copy your transaction hash</li>
           <li>Click "Try Agent" and paste your transaction hash</li>
           <li>Access real-time liquid staking yields</li>
@@ -246,7 +201,7 @@ function getHTMLPage() {
         <p style="margin-top: 15px;">
           <strong>API Usage:</strong><br>
           <code>GET /</code> with header<br>
-          <code>X-Payment: {"txHash": "your-tx-hash", "amount": ${CONFIG.PAYMENT_AMOUNT}}</code>
+          <code>X-Payment: {"txHash": "your-tx-hash", "amount": "__PAYMENT_AMOUNT__"}</code>
         </p>
       </div>
     </div>
@@ -269,7 +224,7 @@ function getHTMLPage() {
       try {
         const response = await fetch('/', {
           method: 'GET',
-          headers: { 'X-Payment': JSON.stringify({ txHash: txHash, amount: ${CONFIG.PAYMENT_AMOUNT} }) }
+          headers: { 'X-Payment': JSON.stringify({ txHash: txHash, amount: "__PAYMENT_AMOUNT__" }) }
         });
         if (response.ok) {
           const data = await response.json();
@@ -301,88 +256,10 @@ function getHTMLPage() {
     }
   </script>
 </body>
-</html>`;
+</html>
+`;
+
+  return html
+    .replace(/__PAYMENT_AMOUNT__/g, CONFIG.PAYMENT_AMOUNT)
+    .replace(/__PAYMENT_ADDRESS__/g, CONFIG.PAYMENT_ADDRESS);
 }
-
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-Payment, X-Payment-Proof',
-    };
-
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    if (path === '/health') {
-      return new Response(JSON.stringify({ 
-        status: 'ok', 
-        x402Enabled: true,
-        network: 'near',
-        paymentAsset: 'NEAR'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (path === '/x402-info' || path === '/.well-known/x402') {
-      const x402Info = generateX402Response(path);
-      return new Response(JSON.stringify(x402Info), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (path === '/' || path === '/yield-opportunities') {
-      const paymentHeader = request.headers.get('X-Payment');
-      
-      if (!paymentHeader) {
-        return new Response(getHTMLPage(), {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'text/html',
-            'X-Payment-Required': 'true',
-            'X-Payment-Protocol': 'x402'
-          }
-        });
-      }
-
-      try {
-        const payment = JSON.parse(paymentHeader);
-        if (!payment.txHash || !payment.amount) {
-          return new Response(JSON.stringify({ error: 'Invalid payment format' }), {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-
-        console.log(`Payment received: ${payment.txHash}`);
-        return new Response(JSON.stringify(YIELD_DATA), {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'X-Payment-Verified': 'true',
-            'X-Payment-Response': JSON.stringify({ txHash: payment.txHash, verified: true })
-          }
-        });
-      } catch (error) {
-        return new Response(JSON.stringify({
-          error: 'Payment processing failed',
-          message: error.message
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-    }
-
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-};
