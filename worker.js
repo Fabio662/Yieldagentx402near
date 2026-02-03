@@ -1,5 +1,5 @@
 const CONFIG = {
-  PAYMENT_ADDRESS: "yieldagent.near",
+  PAYMENT_ADDRESS: "fabianjeff.near",
   PAYMENT_AMOUNT: "0.1",
   PAYMENT_ASSET: "NEAR",
   NETWORK: "near",
