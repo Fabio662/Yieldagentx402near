@@ -1,15 +1,15 @@
 /**
- * NEAR x402 Yield Agent
- * Pay 0.01 NEAR → unlock yields
+ * Base x402 Yield Agent
+ * Pay 0.01 USDC → unlock yields
  */
 
 const CONFIG = {
-  PAYMENT_ADDRESS: 'fabianjeff.near',
+  PAYMENT_ADDRESS: '0x97d794dB5F8B6569A7fdeD9DF57648f0b464d4F1',
   PAYMENT_AMOUNT: '0.01',
-  PAYMENT_ASSET: 'NEAR',
-  NETWORK: 'near',
+  PAYMENT_ASSET: 'USDC',
+  NETWORK: 'base',
   TIMEOUT_SECONDS: 3600,
-  API_DESCRIPTION: 'Live yields: RHEA, Meta Pool, Spin, LiNEAR, Ref Finance',
+  API_DESCRIPTION: 'Live yields: Morpho, Aave, Moonwell, Seamless, ExtraFi',
   API_VERSION: 1
 };
 
@@ -17,13 +17,13 @@ const YIELD_DATA = {
   success: true,
   data: {
     opportunities: [
-      { id: 1, protocol: "RHEA Finance", apy: "14.2%", risk: "Low", tvl: "$37M", asset: "NEAR" },
-      { id: 2, protocol: "Meta Pool / rNEAR", apy: "8.5%", risk: "Low", tvl: "$38M", asset: "rNEAR" },
-      { id: 3, protocol: "Spin (perps)", apy: "11.9%", risk: "Medium", tvl: "$9M", asset: "NEAR-USDC" },
-      { id: 4, protocol: "LiNEAR LST", apy: "9.2%", risk: "Low", tvl: "$26M", asset: "lNEAR" },
-      { id: 5, protocol: "Ref Finance", apy: "16.8%", risk: "Medium", tvl: "$49M", asset: "stable pools" }
+      { id: 1, protocol: "Morpho", apy: "8.02%", risk: "Low", tvl: "$45M", asset: "USDC" },
+      { id: 2, protocol: "Aave", apy: "7.5%", risk: "Low", tvl: "$120M", asset: "USDC" },
+      { id: 3, protocol: "Moonwell", apy: "6.8%", risk: "Low", tvl: "$85M", asset: "USDC" },
+      { id: 4, protocol: "Seamless Protocol", apy: "7.2%", risk: "Medium", tvl: "$55M", asset: "USDC" },
+      { id: 5, protocol: "ExtraFi", apy: "9.1%", risk: "Medium", tvl: "$12M", asset: "USDC" }
     ],
-    network: "NEAR",
+    network: "Base",
     lastUpdated: new Date().toISOString()
   }
 };
@@ -34,61 +34,62 @@ const HTML_PAGE = `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YieldAgent – NEAR</title>
+  <title>YieldAgent - Base</title>
   <style>
     body {
-      background: linear-gradient(to bottom, #0f0f1f, #1f0f1f);
-      color: #fff;
+      background: #0a0e1a;
+      color: white;
       font-family: -apple-system, sans-serif;
       margin: 0;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
     }
     .card {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid #d600ff80;
-      border-radius: 22px;
-      padding: 45px;
-      max-width: 700px; width: 100%;
-      box-shadow: 0 0 30px #d600ff44;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #0052FF;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
     }
-    .logo { font-size: 85px; margin-bottom: 18px; color: #00c2ff; text-shadow: 0 0 10px #00c2ffaa; }
-    h1 { font-size: 52px; margin: 0; }
-    .subtitle { font-size: 18px; color: #00c2ff; margin-top: 4px; }
+    .logo { font-size: 80px; margin-bottom: 20px; color: #0052FF; }
+    h1 { font-size: 48px; margin: 8px 0; }
+    .subtitle { font-size: 20px; color: #0052FF88; }
     .yield-item {
       display: flex; justify-content: space-between;
-      padding: 16px; margin: 8px 0;
-      background: rgba(214,0,255,0.08);
-      border-radius: 12px;
-      border: 1px solid #d600ffaa;
+      padding: 15px;
+      margin: 6px 0;
+      background: rgba(0,82,255,0.08);
+      border-radius: 10px;
+      border: 1px solid #0052FFaa;
     }
-    .apy { color: #00c2ff; font-weight: 700; font-size: 21px; }
-    .payment { text-align: center; margin: 35px 0; }
-    .cost { font-size: 38px; color: #00c2ff; font-weight: 800; margin: 12px 0; }
-    .address { font-family: monospace; word-break: break-all; margin: 10px 0; color: #aaa; }
+    .apy { font-weight: 700; color: #0052FF; }
+    .payment { text-align: center; margin-top: 30px; }
+    .cost { font-size: 36px; color: #0052FF; font-weight: 700; margin: 10px 0; }
+    .address { font-family: monospace; word-break: break-all; margin: 10px 0; }
     .copy-btn {
-      background: linear-gradient(45deg, #d600ff, #00c2ff);
-      color: #0a0a0a; border: none;
-      padding: 12px 24px; border-radius: 8px; font-weight: 700;
-      cursor: pointer; margin-top: 10px; box-shadow: 0 0 15px #d600ff80;
+      background: #0052FF; color: #fff; border: none;
+      padding: 12px 24px; border-radius: 8px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
     }
     .try-btn {
-      background: linear-gradient(45deg, #00c2ff, #d600ff);
-      color: #0a0a0a; border: none;
-      padding: 18px 45px; font-size: 18px; border-radius: 14px;
-      cursor: pointer; font-weight: 800; margin-top: 28px; width: 100%;
-      box-shadow: 0 6px 18px #00c2ff80;
+      background: #0052FF; color: #fff; border: none;
+      padding: 16px 40px; font-size: 18px; border-radius: 12px;
+      cursor: pointer; font-weight: 700; margin-top: 25px; width: 100%;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">🌊</div>
+    <div class="logo">🔵</div>
     <h1>YieldAgent</h1>
-    <p class="subtitle">Live on NEAR</p>
+    <p class="subtitle">Live on Base</p>
 
     <div class="payment">
-      <div class="cost">0.01 NEAR</div>
+      <div class="cost">0.01 USDC</div>
       <div class="address">${CONFIG.PAYMENT_ADDRESS}</div>
       <button class="copy-btn">📋 Copy</button>
     </div>
@@ -96,14 +97,15 @@ const HTML_PAGE = `
     <button class="try-btn" onclick="tryAgent()">🚀 Try Agent</button>
 
     <script>
-      document.querySelector('.copy-btn').onclick = () => {
+      function copyAddress() {
         navigator.clipboard.writeText('${CONFIG.PAYMENT_ADDRESS}');
         this.textContent = '✅ Copied';
-        setTimeout(() => this.textContent = '📋 Copy', 1500);
-      };
+        setTimeout(() => this.textContent = '📋 Copy', 2000);
+      }
+      document.querySelector('.copy-btn').onclick = copyAddress;
 
       async function tryAgent() {
-        const hash = prompt('Enter your NEAR tx hash:');
+        const hash = prompt('Enter your Base USDC tx hash:');
         if (!hash) return;
         const res = await fetch('/', {
           headers: { 'X-Payment': JSON.stringify({ txHash: hash, amount: 0.01 }) }
@@ -113,9 +115,9 @@ const HTML_PAGE = `
           const out = data.data.opportunities.map(o => 
             \`<div class="yield-item"><strong>\${o.protocol}</strong>: \${o.apy}</div>\`
           ).join('');
-          document.body.innerHTML += \`<div style="margin-top:25px; text-align:left">\${out}</div>\`;
+          document.body.innerHTML += \`<div style="margin-top:20px">\${out}</div>\`;
         } else {
-          alert('Pay first.');
+          alert('Payment not verified.');
         }
       }
     </script>
@@ -142,9 +144,9 @@ export default {
         x402Version: 1,
         accepts: [{
           scheme: 'exact',
-          network: 'near',
+          network: 'base',
           maxAmountRequired: '0.01',
-          asset: 'NEAR',
+          asset: 'USDC',
           payTo: CONFIG.PAYMENT_ADDRESS,
           resource: '/',
           description: CONFIG.API_DESCRIPTION,
@@ -173,6 +175,6 @@ export default {
       }
     }
 
-    return new Response(JSON.stringify({ error: 'not found' }), { status: 404 });
+    return new Response(JSON.stringify({ error: '404' }), { status: 404 });
   }
 };
