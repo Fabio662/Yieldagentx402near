@@ -1,5 +1,8 @@
-function getHTMLPage() {
-  return `<!DOCTYPE html>
+return `<!DOCTYPE html>
+<html lang="en">
+... full HTML body here ...
+</body>
+</html>`;
 <html lang="en">
 <head>
   <meta charset="UTF-8">
