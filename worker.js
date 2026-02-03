@@ -1,17 +1,3 @@
-export default {
-  async fetch(request, env, ctx) {
-    return new Response(getHTMLPage(env), {
-      headers: { "Content-Type": "text/html" },
-    });
-  },
-};
-
-const CONFIG = {
-  PAYMENT_AMOUNT: "5",
-  PAYMENT_ADDRESS: "near_wallet_address_here",
-};
-
-function getHTMLPage(env) {
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -187,12 +173,12 @@ function getHTMLPage(env) {
       <div class="payment-section">
         <div class="payment-details">
           <div class="label">One-time Access Fee</div>
-          <div class="cost">__PAYMENT_AMOUNT__ NEAR</div>
+          <div class="cost">0.1 NEAR</div>
           <div class="label">on NEAR Mainnet</div>
           <div class="address-section">
             <div class="label">Send NEAR to:</div>
             <div class="address-container">
-              <div class="address" id="paymentAddress">__PAYMENT_ADDRESS__</div>
+              <div class="address" id="paymentAddress">yieldagent.near</div>
               <button class="copy-btn" onclick="copyAddress(event)">📋 Copy</button>
             </div>
           </div>
@@ -206,7 +192,7 @@ function getHTMLPage(env) {
       <div class="instructions">
         <h3>How to Use:</h3>
         <ol>
-          <li>Send <strong>__PAYMENT_AMOUNT__ NEAR</strong> to the address above on <strong>NEAR network</strong></li>
+          <li>Send <strong>0.1 NEAR</strong> to the address above on <strong>NEAR network</strong></li>
           <li>Copy your transaction hash</li>
           <li>Click "Try Agent" and paste your transaction hash</li>
           <li>Access real-time liquid staking yields</li>
@@ -214,7 +200,7 @@ function getHTMLPage(env) {
         <p style="margin-top: 15px;">
           <strong>API Usage:</strong><br>
           <code>GET /</code> with header<br>
-          <code>X-Payment: {&quot;txHash&quot;: &quot;your-tx-hash&quot;, &quot;amount&quot;: &quot;__PAYMENT_AMOUNT__&quot;}</code>
+          <code>X-Payment: {"txHash": "your-tx-hash", "amount": "0.1"}</code>
         </p>
       </div>
     </div>
@@ -237,7 +223,7 @@ function getHTMLPage(env) {
       try {
         const response = await fetch('/', {
           method: 'GET',
-          headers: { 'X-Payment': JSON.stringify({ txHash: txHash, amount: "__PAYMENT_AMOUNT__" }) }
+          headers: { 'X-Payment': JSON.stringify({ txHash: txHash, amount: 0.1 }) }
         });
         if (response.ok) {
           const data = await response.json();
@@ -270,7 +256,7 @@ function getHTMLPage(env) {
   </script>
 </body>
 </html>
-`;
+  `;
 
   return html
     .replace(/__PAYMENT_AMOUNT__/g, CONFIG.PAYMENT_AMOUNT)
