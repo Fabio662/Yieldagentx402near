@@ -1,8 +1,5 @@
-return `<!DOCTYPE html>
-<html lang="en">
-... full HTML body here ...
-</body>
-</html>`;
+function getHTMLPage() {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -156,4 +153,34 @@ return `<!DOCTYPE html>
       <h1>YieldAgent</h1>
       <p class="subtitle">NEAR Liquid Staking Yields</p>
       <span class="network-badge">🟢 NEAR Protocol</span>
-    </div
+    </div>
+    <div class="card">
+      <h2>🔒 Unlock Liquid Staking Data</h2>
+      <div class="yields-preview">
+        <div class="yield-item">
+          <span class="protocol-name">RHEA</span>
+          <span class="apy">9.2%</span>
+        </div>
+        <div class="yield-item">
+          <span class="protocol-name">Meta Pool</span>
+          <span class="apy">8.7%</span>
+        </div>
+        <div class="yield-item">
+          <span class="protocol-name">Linear Protocol</span>
+          <span class="apy">8.5%</span>
+        </div>
+      </div>
+      <div class="payment-section">
+        <div class="payment-details">
+          <div class="label">One-time Access Fee</div>
+          <div class="cost">$${CONFIG.PAYMENT_AMOUNT} NEAR</div>
+          <div class="label">on NEAR Mainnet</div>
+          <div class="address-section">
+            <div class="label">Send NEAR to:</div>
+            <div class="address-container">
+              <div class="address" id="paymentAddress">${CONFIG.PAYMENT_ADDRESS}</div>
+              <button class="copy-btn" onclick="copyAddress()">📋 Copy</button>
+            </div>
+          </div>
+        </div>
+      </div
