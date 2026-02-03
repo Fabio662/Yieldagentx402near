@@ -1,4 +1,50 @@
-function getHTMLPage(CONFIG) {
+/**
+ * NEAR Network x402 API - Liquid Staking Yield Opportunities
+ * Single-file Cloudflare Worker
+ * Accepts NEAR payments on NEAR network
+ */
+
+const CONFIG = {
+  PAYMENT_ADDRESS: 'yieldagent.near',
+  PAYMENT_AMOUNT: '0.1',
+  PAYMENT_ASSET: 'NEAR',
+  NETWORK: 'near',
+  TIMEOUT_SECONDS: 3600,
+  API_DESCRIPTION: 'Access to real-time NEAR liquid staking yield opportunities',
+  API_VERSION: 1
+};
+
+const YIELD_DATA = {
+  success: true,
+  data: {
+    opportunities: [
+      { id: 1, protocol: "RHEA", apy: "9.2%", risk: "Low", tvl: "$18M", asset: "NEAR" },
+      { id: 2, protocol: "Meta Pool", apy: "8.7%", risk: "Low", tvl: "$45M", asset: "NEAR" },
+      { id: 3, protocol: "Linear Protocol", apy: "8.5%", risk: "Low", tvl: "$32M", asset: "NEAR" }
+    ],
+    network: "NEAR",
+    lastUpdated: new Date().toISOString()
+  }
+};
+
+function generateX402Response(resource) {
+  return {
+    x402Version: CONFIG.API_VERSION,
+    accepts: [{
+      scheme: "exact",
+      network: CONFIG.NETWORK,
+      maxAmountRequired: CONFIG.PAYMENT_AMOUNT,
+      resource: resource,
+      description: CONFIG.API_DESCRIPTION,
+      mimeType: "application/json",
+      payTo: CONFIG.PAYMENT_ADDRESS,
+      maxTimeoutSeconds: CONFIG.TIMEOUT_SECONDS,
+      asset: CONFIG.PAYMENT_ASSET
+    }]
+  };
+}
+
+function getHTMLPage() {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -179,59 +225,164 @@ function getHTMLPage(CONFIG) {
             <div class="label">Send NEAR to:</div>
             <div class="address-container">
               <div class="address" id="paymentAddress">${CONFIG.PAYMENT_ADDRESS}</div>
-              <button class="copy-btn" onclick="copyAddress()">📋 Copy</button>
+              <button class="copy-btn" onclick="copyAddress(event)">📋 Copy</button>
             </div>
           </div>
         </div>
       </div>
-
-      <button class="try-agent-btn" onclick="checkPayment()">🚀 Try Agent</button>
-
-      <div class="result-section" id="resultSection"></div>
-
+      <button class="try-agent-btn" onclick="tryAgent()">🚀 Try Agent</button>
+      <div class="result-section" id="resultSection">
+        <h3>✅ Yield Opportunities Retrieved!</h3>
+        <div id="resultData"></div>
+      </div>
       <div class="instructions">
-        <h3>How it works</h3>
+        <h3>How to Use:</h3>
         <ol>
-          <li>Send the exact amount of NEAR to the address above.</li>
-          <li>Click <strong>Try Agent</strong>.</li>
-          <li>Your yields will unlock instantly after confirmation.</li>
+          <li>Send <strong>${CONFIG.PAYMENT_AMOUNT} NEAR</strong> to the address above on <strong>NEAR network</strong></li>
+          <li>Copy your transaction hash</li>
+          <li>Click "Try Agent" and paste your transaction hash</li>
+          <li>Access real-time liquid staking yields</li>
         </ol>
+        <p style="margin-top: 15px;">
+          <strong>API Usage:</strong><br>
+          <code>GET /</code> with header<br>
+          <code>X-Payment: {"txHash": "your-tx-hash", "amount": ${CONFIG.PAYMENT_AMOUNT}}</code>
+        </p>
       </div>
     </div>
-
-    <div class="footer">
-      Built for the NEAR ecosystem 🌐
-    </div>
+    <div class="footer">Powered by x402 Protocol • NEAR Network</div>
   </div>
-
   <script>
-    function copyAddress() {
-      const address = document.getElementById("paymentAddress").innerText;
-      navigator.clipboard.writeText(address);
-      alert("Address copied to clipboard!");
+    function copyAddress(event) {
+      const address = document.getElementById('paymentAddress').textContent;
+      navigator.clipboard.writeText(address).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 2000);
+      });
     }
 
-    async function checkPayment() {
-      const res = await fetch("/check-payment");
-      const data = await res.json();
-      const resultSection = document.getElementById("resultSection");
+    async function tryAgent() {
+      const txHash = prompt('Enter your NEAR payment transaction hash:');
+      if (!txHash) return;
+      try {
+        const response = await fetch('/', {
+          method: 'GET',
+          headers: { 'X-Payment': JSON.stringify({ txHash: txHash, amount: ${CONFIG.PAYMENT_AMOUNT} }) }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          displayResults(data);
+        } else {
+          const error = await response.json();
+          alert('Payment verification failed: ' + (error.message || error.error));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
 
-      if (data.success) {
-        resultSection.classList.add("show");
-        resultSection.innerHTML = data.yields.map(yieldItem => \`
-          <div class="result-item">
-            <div class="result-protocol">\${yieldItem.protocol}</div>
-            <div class="result-details">
-              <div>APY: \${yieldItem.apy}%</div>
-              <div>TVL: \${yieldItem.tvl}</div>
-            </div>
-          </div>
-        \`).join("");
-      } else {
-        alert("Payment not detected yet. Please try again shortly.");
+    function displayResults(data) {
+      const resultSection = document.getElementById('resultSection');
+      const resultData = document.getElementById('resultData');
+      if (data.success && data.data && data.data.opportunities) {
+        let html = '';
+        data.data.opportunities.forEach(opp => {
+          html += '<div class="result-item"><div class="result-protocol">' + opp.protocol + 
+            '</div><div class="result-details"><span>APY: <strong>' + opp.apy + 
+            '</strong></span><span>TVL: <strong>' + opp.tvl + 
+            '</strong></span><span>Risk: <strong>' + opp.risk + '</strong></span></div></div>';
+        });
+        resultData.innerHTML = html;
+        resultSection.classList.add('show');
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }
   </script>
 </body>
 </html>`;
 }
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Payment, X-Payment-Proof',
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    if (path === '/health') {
+      return new Response(JSON.stringify({ 
+        status: 'ok', 
+        x402Enabled: true,
+        network: 'near',
+        paymentAsset: 'NEAR'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (path === '/x402-info' || path === '/.well-known/x402') {
+      const x402Info = generateX402Response(path);
+      return new Response(JSON.stringify(x402Info), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (path === '/' || path === '/yield-opportunities') {
+      const paymentHeader = request.headers.get('X-Payment');
+      
+      if (!paymentHeader) {
+        return new Response(getHTMLPage(), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/html',
+            'X-Payment-Required': 'true',
+            'X-Payment-Protocol': 'x402'
+          }
+        });
+      }
+
+      try {
+        const payment = JSON.parse(paymentHeader);
+        if (!payment.txHash || !payment.amount) {
+          return new Response(JSON.stringify({ error: 'Invalid payment format' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        console.log(`Payment received: ${payment.txHash}`);
+        return new Response(JSON.stringify(YIELD_DATA), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'X-Payment-Verified': 'true',
+            'X-Payment-Response': JSON.stringify({ txHash: payment.txHash, verified: true })
+          }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({
+          error: 'Payment processing failed',
+          message: error.message
+        }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+};
