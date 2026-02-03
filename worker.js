@@ -395,5 +395,5 @@ export default {
       status: 404,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  },
+  }
 };
